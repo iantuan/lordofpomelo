@@ -21,18 +21,19 @@ NND.init = function(){
  * @param {fuction} callback Callback function.
  * 
  */
-NND.query = function(sql, args, callback){
-	_pool.acquire(function(err, client) {
-		if (!!err) {
-			console.error('[sqlqueryErr] '+err.stack);
-			return;
-		}
-		client.query(sql, args, function(err, res) {
-			_pool.release(client);
-			callback.apply(null, [err, res]);
-		});
-	});
+NND.query = function (sql, args, callback) {
+    const resourcePromise = _pool.acquire();
+    resourcePromise.then(function (client) {
+        client.query(sql, args, function (err, res) {
+            _pool.release(client);
+            callback && callback(err, res);
+        });
+    })
+    .catch(function (err) {
+        console.error('[sqlqueryErr]' + err.stack);
+    });
 };
+
 
 /**
  * Close connection pool.
